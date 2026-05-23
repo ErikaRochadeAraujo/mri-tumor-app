@@ -3,6 +3,7 @@ __pycache__/
 *.pyo
 .streamlit/
 *.bat
+.python-version
 imagens IRM para teste/
 instrucoes.png
 instrucoes2.png
