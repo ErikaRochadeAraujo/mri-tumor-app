@@ -5,7 +5,7 @@ import numpy as np
 import nibabel as nib
 import cv2
 import streamlit as st
-from tensorflow import keras
+import tf_keras as keras
 
 VOLUME_SLICES = 100
 VOLUME_START_AT = 22
