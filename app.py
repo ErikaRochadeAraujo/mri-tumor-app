@@ -117,7 +117,7 @@ else:
 
             if flair_uid == t1ce_uid:
                 st.warning("FLAIR e T1CE estão apontando para a mesma série. Verifique a seleção.")
-            elif st.button("Converter DICOM → NIfTI", use_container_width=True):
+            elif st.button("Converter DICOM → NIfTI", width="stretch"):
                 with st.spinner("Convertendo FLAIR..."):
                     try:
                         flair_bytes = convert_bytes_list_to_nifti(series[flair_uid]["bytes_list"])
@@ -150,7 +150,7 @@ if not ready:
     if not t1ce_bytes:  missing.append("T1CE")
     st.info(f"Aguardando: {', '.join(missing)}")
 
-if ready and st.button("Analisar", type="primary", use_container_width=True):
+if ready and st.button("Analisar", type="primary", width="stretch"):
     with st.spinner("Carregando modelo e pré-processando imagens..."):
         try:
             model = load_model_cached(model_path)

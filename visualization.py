@@ -146,7 +146,7 @@ def show_slice_comparison(flair_vol: np.ndarray, pred: np.ndarray,
         axarr[1, 2].set_title("Todas as classes previstas")
 
     fig.tight_layout()
-    st.pyplot(fig, use_container_width=True)
+    st.pyplot(fig)
     plt.close(fig)
 
 
