@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pyo
+.streamlit/
+*.bat
+imagens IRM para teste/
+instrucoes.png
+instrucoes2.png
