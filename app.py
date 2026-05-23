@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 
 from model_utils import (
-    load_model_cached, preprocess_volumes, DEFAULT_MODEL_PATH,
+    load_model_cached, run_inference, preprocess_volumes, DEFAULT_MODEL_PATH,
     group_dicom_series, detect_modality, convert_bytes_list_to_nifti,
 )
 from visualization import show_slice_comparison, show_diagnostic_summary, load_seg_volume
@@ -22,7 +22,7 @@ st.markdown(
 # ── Sidebar ──────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.header("Configurações")
-    model_path = st.text_input("Caminho do modelo (.h5)", value=DEFAULT_MODEL_PATH)
+    model_path = st.text_input("Caminho do modelo (.onnx)", value=DEFAULT_MODEL_PATH)
     st.markdown("---")
     st.markdown(
         "**Classes detectadas:**\n"
@@ -161,7 +161,7 @@ if ready and st.button("Analisar", type="primary", use_container_width=True):
 
     with st.spinner("Executando inferência..."):
         try:
-            prediction = model.predict(X, verbose=0)
+            prediction = run_inference(model, X)
         except Exception as e:
             st.error(f"Erro na inferência: {e}")
             st.stop()

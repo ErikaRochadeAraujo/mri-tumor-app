@@ -5,19 +5,24 @@ import numpy as np
 import nibabel as nib
 import cv2
 import streamlit as st
-import tf_keras as keras
 
 VOLUME_SLICES = 100
 VOLUME_START_AT = 22
 IMG_SIZE = 128
 
-DEFAULT_MODEL_PATH = os.path.join(os.path.dirname(__file__), "model_x80_dcs65copy42.h5")
+DEFAULT_MODEL_PATH = os.path.join(os.path.dirname(__file__), "model.onnx")
 
 
 @st.cache_resource(show_spinner="Carregando modelo...")
 def load_model_cached(model_path: str):
-    # compile=False evita precisar das funções de perda/métricas customizadas
-    return keras.models.load_model(model_path, compile=False)
+    import onnxruntime as ort
+    return ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
+
+
+def run_inference(session, X: np.ndarray) -> np.ndarray:
+    input_name  = session.get_inputs()[0].name
+    output_name = session.get_outputs()[0].name
+    return session.run([output_name], {input_name: X.astype(np.float32)})[0]
 
 
 def _load_nifti_from_bytes(nii_bytes: bytes) -> np.ndarray:
