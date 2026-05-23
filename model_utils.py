@@ -19,10 +19,21 @@ def load_model_cached(model_path: str):
     return ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
 
 
-def run_inference(session, X: np.ndarray) -> np.ndarray:
+def run_inference(session, X: np.ndarray, batch_size: int = 8) -> np.ndarray:
+    """Roda inferência em mini-batches para manter o WebSocket vivo no Streamlit Cloud."""
     input_name  = session.get_inputs()[0].name
     output_name = session.get_outputs()[0].name
-    return session.run([output_name], {input_name: X.astype(np.float32)})[0]
+    n = X.shape[0]
+    results = []
+    progress = st.progress(0, text="Processando slices...")
+    for start in range(0, n, batch_size):
+        end = min(start + batch_size, n)
+        out = session.run([output_name],
+                         {input_name: X[start:end].astype(np.float32)})[0]
+        results.append(out)
+        progress.progress(end / n, text=f"Processando slices {end}/{n}...")
+    progress.empty()
+    return np.concatenate(results, axis=0)
 
 
 def _load_nifti_from_bytes(nii_bytes: bytes) -> np.ndarray:
