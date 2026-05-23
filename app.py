@@ -33,6 +33,11 @@ with st.sidebar:
     )
     st.info("O modelo usa **2 modalidades**: FLAIR e T1CE.")
 
+st.markdown(
+    "Para usar e testar você pode usar os arquivos que deixo disponíveis aqui: "
+    "[Exemplos](https://github.com/ErikaRochadeAraujo/mri-tumor-app/tree/main/Imagens%20de%20IRM)"
+)
+
 # ── Seletor de formato ────────────────────────────────────────────────────────
 st.subheader("Formato das imagens")
 fmt = st.radio(
