@@ -21,9 +21,12 @@ def load_model_cached(model_path: str):
 
 
 def _load_nifti_from_bytes(nii_bytes: bytes) -> np.ndarray:
-    """Carrega NIfTI de bytes via BytesIO — sem arquivo temporário (evita lock no Windows)."""
+    """Carrega NIfTI de bytes, detectando automaticamente se está comprimido (.nii.gz)."""
+    import gzip
+    if nii_bytes[:2] == b'\x1f\x8b':   # magic bytes do gzip
+        nii_bytes = gzip.decompress(nii_bytes)
     img = nib.Nifti1Image.from_bytes(nii_bytes)
-    return np.asarray(img.dataobj)
+    return np.asarray(img.dataobj).copy()
 
 
 _FLAIR_KEYWORDS = ["flair", "t2_flair", "t2-flair", "t2flair"]

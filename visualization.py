@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import nibabel as nib
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import streamlit as st
 
 SEGMENT_CLASSES = {
@@ -62,8 +61,11 @@ def _upscale(img: np.ndarray) -> np.ndarray:
 
 def load_seg_volume(seg_bytes: bytes) -> np.ndarray:
     """Carrega o volume de segmentação e mapeia valor 4 → 3 (padrão BraTS)."""
+    import gzip
+    if seg_bytes[:2] == b'\x1f\x8b':
+        seg_bytes = gzip.decompress(seg_bytes)
     img = nib.Nifti1Image.from_bytes(seg_bytes)
-    vol = np.asarray(img.dataobj)
+    vol = np.asarray(img.dataobj).copy()
     vol[vol == 4] = 3   # BraTS usa 4 para tumor com realce
     return vol          # shape original (240, 240, 155)
 

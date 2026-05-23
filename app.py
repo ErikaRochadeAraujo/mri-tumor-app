@@ -95,7 +95,7 @@ else:
             def series_label(uid):
                 info = series[uid]
                 mod  = auto[uid]
-                tag  = f" — detectado: **{mod}**" if mod != "Não identificado" else ""
+                tag  = f" [detectado: {mod}]" if mod != "Não identificado" else ""
                 return f"{info['description']} ({len(info['bytes_list'])} arquivos){tag}"
 
             st.markdown("#### Confirme qual série corresponde a cada modalidade:")
