@@ -5,7 +5,7 @@ from model_utils import (
     load_model_cached, run_inference, preprocess_volumes, DEFAULT_MODEL_PATH,
     group_dicom_series, detect_modality, convert_bytes_list_to_nifti,
 )
-from visualization import show_slice_comparison, show_diagnostic_summary, load_seg_volume
+from visualization import show_slice_comparison, show_diagnostic_summary, load_seg_volume, show_3d_view
 
 st.set_page_config(
     page_title="Análise de Tumor - RM Cerebral",
@@ -193,3 +193,15 @@ if "prediction" in st.session_state:
     show_slice_comparison(flair_vol, prediction, slice_idx, seg_vol)
 
     show_diagnostic_summary(prediction, flair_vol)
+
+    st.markdown("---")
+    st.subheader("Visualização 3D interativa")
+    show_3d = st.checkbox("Gerar visualização 3D (nuvem de pontos do cérebro e do tumor)")
+    if show_3d:
+        downsample = st.slider(
+            "Densidade da nuvem de pontos", min_value=3, max_value=20, value=8,
+            help="Valores menores = mais pontos e mais detalhe, porém mais lento para girar/ampliar.",
+        )
+        st.caption("Arraste para girar, use o scroll para zoom. Clique na legenda para ligar/desligar cada classe.")
+        with st.spinner("Montando nuvem de pontos 3D..."):
+            show_3d_view(flair_vol, prediction, seg_vol, mri_downsample=downsample)

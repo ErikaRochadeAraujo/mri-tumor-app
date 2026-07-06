@@ -52,6 +52,7 @@ def _make_argmax_overlay(class_map: np.ndarray, alpha: float = 0.65) -> np.ndarr
 DISPLAY_SIZE = 1024
 DPI = 250
 VOLUME_START_AT = 22
+IMG_SIZE = 128
 
 
 def _upscale(img: np.ndarray) -> np.ndarray:
@@ -180,3 +181,75 @@ def show_diagnostic_summary(pred: np.ndarray, flair_vol: np.ndarray):
                 f"**{SEGMENT_CLASSES[cls_id]}**: {n:,} voxels ({100*n/total:.2f}%)",
                 unsafe_allow_html=True,
             )
+
+
+def _resize_seg_to_pred_grid(seg_vol: np.ndarray, n_slices: int) -> np.ndarray:
+    """Redimensiona o rótulo verdade (240,240,155) para a mesma grade do modelo (n,128,128)."""
+    out = np.zeros((n_slices, IMG_SIZE, IMG_SIZE), dtype=np.uint8)
+    for j in range(n_slices):
+        raw = seg_vol[:, :, j + VOLUME_START_AT]
+        out[j] = cv2.resize(raw.astype(np.float32), (IMG_SIZE, IMG_SIZE),
+                            interpolation=cv2.INTER_NEAREST).astype(np.uint8)
+    return out
+
+
+def _point_cloud(mask: np.ndarray, downsample: int):
+    """Extrai coordenadas (x, y, z) dos voxels ativos de uma máscara 3D (n, H, W), amostrando 1 a cada `downsample`."""
+    z, x, y = mask.nonzero()
+    if downsample > 1:
+        z, x, y = z[::downsample], x[::downsample], y[::downsample]
+    return x, y, z
+
+
+def show_3d_view(flair_vol: np.ndarray, pred: np.ndarray,
+                 seg_vol: np.ndarray | None = None, mri_downsample: int = 8):
+    """Nuvem de pontos 3D interativa: cérebro (FLAIR) + regiões tumorais previstas (e rótulo verdade, se houver)."""
+    import plotly.graph_objects as go
+
+    mask = np.argmax(pred, axis=-1)  # (n, 128, 128) classe prevista por voxel
+    tumor_downsample = {1: 2, 2: 3, 3: 1}
+
+    traces = []
+
+    xb, yb, zb = _point_cloud(flair_vol > 0.05, mri_downsample)
+    traces.append(go.Scatter3d(
+        x=xb, y=yb, z=zb, mode="markers", hoverinfo="skip",
+        marker=dict(size=2, opacity=0.15, color=flair_vol[zb, xb, yb],
+                   colorscale="Greys", reversescale=True),
+        name="Cérebro (FLAIR)",
+    ))
+
+    for cls_id in [1, 2, 3]:
+        xt, yt, zt = _point_cloud(mask == cls_id, tumor_downsample[cls_id])
+        if len(xt) == 0:
+            continue
+        traces.append(go.Scatter3d(
+            x=xt, y=yt, z=zt, mode="markers", hoverinfo="skip",
+            marker=dict(size=3, opacity=0.6, color=CLASS_COLORS_HEX[cls_id]),
+            name=f"{SEGMENT_CLASSES[cls_id]} (previsto)",
+        ))
+
+    if seg_vol is not None:
+        seg_grid = _resize_seg_to_pred_grid(seg_vol, pred.shape[0])
+        for cls_id in [1, 2, 3]:
+            xt, yt, zt = _point_cloud(seg_grid == cls_id, tumor_downsample[cls_id])
+            if len(xt) == 0:
+                continue
+            traces.append(go.Scatter3d(
+                x=xt, y=yt, z=zt, mode="markers", hoverinfo="skip",
+                marker=dict(size=3, opacity=0.6, symbol="diamond", color=CLASS_COLORS_HEX[cls_id]),
+                name=f"{SEGMENT_CLASSES[cls_id]} (rótulo verdade)",
+                visible="legendonly",
+            ))
+
+    fig = go.Figure(data=traces)
+    fig.update_layout(
+        height=700,
+        margin=dict(l=0, r=0, t=10, b=0),
+        legend=dict(itemsizing="constant", title="Classe (clique para ligar/desligar)"),
+        scene=dict(
+            xaxis=dict(visible=False), yaxis=dict(visible=False), zaxis=dict(visible=False),
+            aspectmode="data",
+        ),
+    )
+    st.plotly_chart(fig, width="stretch")
