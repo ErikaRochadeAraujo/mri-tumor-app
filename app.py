@@ -198,10 +198,19 @@ if "prediction" in st.session_state:
     st.subheader("Visualização 3D interativa")
     show_3d = st.checkbox("Gerar visualização 3D (nuvem de pontos do cérebro e do tumor)")
     if show_3d:
-        downsample = st.slider(
-            "Densidade da nuvem de pontos", min_value=3, max_value=20, value=8,
-            help="Valores menores = mais pontos e mais detalhe, porém mais lento para girar/ampliar.",
+        density_options = {
+            "Leve (mais rápido)": 15,
+            "Média": 8,
+            "Densa": 5,
+            "Muito densa (mais lento)": 3,
+        }
+        density_label = st.select_slider(
+            "Densidade da nuvem de pontos",
+            options=list(density_options.keys()),
+            value="Média",
+            help="Mais densa = mais pontos e mais detalhe, porém mais lento para girar/ampliar.",
         )
+        downsample = density_options[density_label]
         st.caption("Arraste para girar, use o scroll para zoom. Clique na legenda para ligar/desligar cada classe.")
         with st.spinner("Montando nuvem de pontos 3D..."):
             show_3d_view(flair_vol, prediction, seg_vol, mri_downsample=downsample)
